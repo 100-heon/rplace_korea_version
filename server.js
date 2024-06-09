@@ -4,11 +4,10 @@ const socketIo = require('socket.io');
 const cors = require('cors');
 const mongoose = require('mongoose');
 const path = require('path');
-require('dotenv').config(); // dotenv 패키지를 사용하여 환경 변수 로드
+require('dotenv').config();
 
-console.log('MongoDB URI:', process.env.MONGODB_URI); // MongoDB URI 출력 확인
+console.log('MongoDB URI:', process.env.MONGODB_URI);
 
-// MongoDB 연결 설정 (MongoDB Atlas 사용)
 mongoose.connect(process.env.MONGODB_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
