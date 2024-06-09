@@ -18,7 +18,7 @@ const io = socketIo(server, {
   }
 });
 
-const board = Array(50).fill().map(() => Array(70).fill("#FFFFFF")); // 50 rows, 50 columns
+const board = Array(50).fill().map(() => Array(70).fill("#FFFFFF")); // 50 rows, 70 columns
 
 io.on('connection', (socket) => {
     console.log('New client connected');
@@ -40,6 +40,6 @@ app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, 'build', 'index.html'));
 });
 
-// 다른 포트를 설정합니다.
+// 포트 설정
 const PORT = process.env.PORT || 4000;
 server.listen(PORT, () => console.log(`Listening on port ${PORT}`));
