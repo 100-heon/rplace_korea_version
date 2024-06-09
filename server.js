@@ -4,9 +4,12 @@ const socketIo = require('socket.io');
 const cors = require('cors');
 const mongoose = require('mongoose');
 const path = require('path');
+require('dotenv').config(); // dotenv 패키지를 사용하여 환경 변수 로드
 
-// MongoDB 연결 설정 (로컬 MongoDB 사용)
-mongoose.connect('mongodb://localhost:27017/rplace', {
+console.log('MongoDB URI:', process.env.MONGODB_URI); // MongoDB URI 출력 확인
+
+// MongoDB 연결 설정 (MongoDB Atlas 사용)
+mongoose.connect(process.env.MONGODB_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
   serverSelectionTimeoutMS: 5000, // 연결 타임아웃 설정
@@ -66,7 +69,7 @@ io.on('connection', async (socket) => {
   boardData.forEach(item => {
     formattedBoard[item.y][item.x] = item.color;
   });
-  //console.log('Sending initial board:', formattedBoard);
+  console.log('Sending initial board:', formattedBoard);
   socket.emit('initial_board', formattedBoard);
 
   socket.on('change_color', async (data) => {
