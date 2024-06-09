@@ -21,11 +21,7 @@ mongoose.connect(process.env.MONGODB_URI, {
 
 const app = express();
 app.use(cors());
-app.use(express.static(path.join(__dirname, 'build')));
-
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'build', 'index.html'));
-});
+app.use(express.static(path.join(__dirname, 'build')));  // 정적 파일 제공
 
 const server = http.createServer(app);
 const io = socketIo(server, {
@@ -35,6 +31,7 @@ const io = socketIo(server, {
   },
 });
 
+// 보드 스키마 및 모델 정의
 const boardSchema = new mongoose.Schema({
   x: Number,
   y: Number,
@@ -43,6 +40,7 @@ const boardSchema = new mongoose.Schema({
 
 const Board = mongoose.model('Board', boardSchema);
 
+// 초기 보드 상태 설정 함수
 const initBoard = async () => {
   const boardData = await Board.find({});
   if (boardData.length === 0) {
@@ -61,7 +59,7 @@ const initBoard = async () => {
 
 io.on('connection', async (socket) => {
   console.log('New client connected');
-
+  
   const boardData = await Board.find({});
   const formattedBoard = Array(50).fill().map(() => Array(70).fill("#FFFFFF"));
   boardData.forEach(item => {
@@ -77,7 +75,7 @@ io.on('connection', async (socket) => {
       const result = await Board.updateOne({ x, y }, { x, y, color }, { upsert: true });
       console.log(`Color updated at (${x}, ${y}) to ${color}`);
       console.log('Update result:', result);
-
+      
       const updatedBoard = await Board.findOne({ x, y });
       console.log('Updated board entry:', updatedBoard);
 
@@ -90,6 +88,11 @@ io.on('connection', async (socket) => {
   socket.on('disconnect', () => {
     console.log('Client disconnected');
   });
+});
+
+// 모든 요청을 React 앱으로 라우팅
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'build', 'index.html'));
 });
 
 const PORT = process.env.PORT || 4000;
