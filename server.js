@@ -28,7 +28,7 @@ app.use(express.static(path.join(__dirname, 'build')));
 const server = http.createServer(app);
 const io = socketIo(server, {
   cors: {
-    origin: "http://localhost:3000", // 클라이언트 주소를 명시적으로 허용
+    origin: "*", // 모든 출처에서의 요청을 허용
     methods: ["GET", "POST"],
   },
 });
