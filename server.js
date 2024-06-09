@@ -1,118 +1,104 @@
-import React, { useState, useEffect } from 'react';
-import io from 'socket.io-client';
-import { SketchPicker } from 'react-color';
-import Draggable from 'react-draggable';
-import './App.css';
+const express = require('express');
+const http = require('http');
+const socketIo = require('socket.io');
+const cors = require('cors');
+const mongoose = require('mongoose');
+const path = require('path');
+require('dotenv').config();
 
-const socket = io('http://localhost:4000');
+console.log('MongoDB URI:', process.env.MONGODB_URI);
 
-function App() {
-    const [board, setBoard] = useState([]);
-    const [currentColor, setCurrentColor] = useState("#000000");
-    const [selectedPixel, setSelectedPixel] = useState(null);
-    const [showPicker, setShowPicker] = useState(false);
-    const [pickerPosition, setPickerPosition] = useState({ x: 0, y: 0 });
-    const [tempBoard, setTempBoard] = useState([]);
-    const [pickerKey, setPickerKey] = useState(0); // 팔레트 위치를 강제로 업데이트하기 위한 상태
+mongoose.connect(process.env.MONGODB_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+  serverSelectionTimeoutMS: 5000, // 연결 타임아웃 설정
+}).then(() => {
+  console.log('MongoDB connected');
+  initBoard(); // 보드 초기화 함수 호출
+}).catch(err => {
+  console.error('MongoDB connection error:', err);
+});
 
-    useEffect(() => {
-        // 서버로부터 초기 보드 상태를 받음
-        socket.on('initial_board', board => {
-            setBoard(board);
-            setTempBoard(board);
-        });
+const app = express();
+app.use(cors());
 
-        // 서버로부터 색상 변경 사항을 받음
-        socket.on('change_color', data => {
-            setBoard(prevBoard => {
-                const { x, y, color } = data;
-                const newBoard = [...prevBoard];
-                newBoard[y][x] = color;
-                return newBoard;
-            });
-            setTempBoard(prevBoard => {
-                const { x, y, color } = data;
-                const newBoard = [...prevBoard];
-                newBoard[y][x] = color;
-                return newBoard;
-            });
-        });
+// 정적 파일 제공
+app.use(express.static(path.join(__dirname, 'build')));
 
-    }, []);
+const server = http.createServer(app);
+const io = socketIo(server, {
+  cors: {
+    origin: "http://localhost:3000", // 클라이언트 주소를 명시적으로 허용
+    methods: ["GET", "POST"],
+  },
+});
 
-    const handlePixelClick = (x, y, event) => {
-        // 현재 팔레트가 열려있는 상태에서도 새로운 픽셀 클릭을 허용
-        if (showPicker) {
-            cancelColorChange(); // 기존 선택 상태 초기화
-        }
+// 보드 스키마 및 모델 정의
+const boardSchema = new mongoose.Schema({
+  x: Number,
+  y: Number,
+  color: String,
+});
 
-        setSelectedPixel({ x, y });
-        setShowPicker(true);
+const Board = mongoose.model('Board', boardSchema);
 
-        // 팔레트 위치를 픽셀 위치에서 약간 떨어진 곳으로 설정
-        setPickerPosition({ x: event.clientX + 20, y: event.clientY + 20 });
-        setPickerKey(prevKey => prevKey + 1); // 새로운 키 값 설정
-    };
+// 초기 보드 상태 설정 함수
+const initBoard = async () => {
+  const boardData = await Board.find({});
+  if (boardData.length === 0) {
+    const initialBoard = [];
+    for (let y = 0; y < 50; y++) {
+      for (let x = 0; x < 70; x++) {
+        initialBoard.push({ x, y, color: "#FFFFFF" });
+      }
+    }
+    await Board.insertMany(initialBoard);
+    console.log('Initial board data inserted');
+  } else {
+    console.log('Board data already exists');
+  }
+};
 
-    const handleColorChange = (color) => {
-        setCurrentColor(color.hex);
-        if (selectedPixel) {
-            const { x, y } = selectedPixel;
-            setTempBoard(prevBoard => {
-                const newBoard = prevBoard.map(row => [...row]);
-                newBoard[y][x] = color.hex;
-                return newBoard;
-            });
-        }
-    };
+io.on('connection', async (socket) => {
+  console.log('New client connected');
+  
+  // 초기 보드 상태를 클라이언트에 전송
+  const boardData = await Board.find({});
+  const formattedBoard = Array(50).fill().map(() => Array(70).fill("#FFFFFF"));
+  boardData.forEach(item => {
+    formattedBoard[item.y][item.x] = item.color;
+  });
+  console.log('Sending initial board:', formattedBoard);
+  socket.emit('initial_board', formattedBoard);
 
-    const confirmColorChange = () => {
-        if (selectedPixel) {
-            const { x, y } = selectedPixel;
-            socket.emit('change_color', { x, y, color: currentColor });
-            setSelectedPixel(null);
-            setShowPicker(false);
-        }
-    };
+  socket.on('change_color', async (data) => {
+    const { x, y, color } = data;
+    console.log('Received color change:', data);
+    try {
+      const result = await Board.updateOne({ x, y }, { x, y, color }, { upsert: true });
+      console.log(`Color updated at (${x}, ${y}) to ${color}`);
+      console.log('Update result:', result);
+      
+      // 업데이트 후 데이터 확인
+      const updatedBoard = await Board.findOne({ x, y });
+      console.log('Updated board entry:', updatedBoard);
 
-    const cancelColorChange = () => {
-        setSelectedPixel(null);
-        setShowPicker(false);
-        setTempBoard(board); // 원래 보드 상태로 되돌리기
-    };
+      io.emit('change_color', { x, y, color });
+    } catch (err) {
+      console.error('Failed to update color:', err);
+    }
+  });
 
-    return (
-        <div className="App">
-            <h1>시험기간에 미쳐가는 ADSL</h1>
-            {showPicker && (
-                <Draggable key={pickerKey} defaultPosition={pickerPosition}>
-                    <div className="picker-container" style={{ position: 'absolute', zIndex: 1000, background: '#fff', padding: '10px', borderRadius: '10px', boxShadow: '0 0 10px rgba(0,0,0,0.2)' }}>
-                        <SketchPicker color={currentColor} onChange={handleColorChange} />
-                        <div style={{ marginTop: '10px', textAlign: 'center' }}>
-                            <button onClick={confirmColorChange} style={{ marginRight: '10px' }}>확인</button>
-                            <button onClick={cancelColorChange}>취소</button>
-                        </div>
-                    </div>
-                </Draggable>
-            )}
-            <div className="board-container">
-                <div className="pixel-board">
-                    {tempBoard.map((row, y) => (
-                        <div key={y} style={{ display: 'flex' }}>
-                            {row.map((color, x) => (
-                                <div key={x} onClick={(e) => handlePixelClick(x, y, e)} 
-                                    className="pixel"
-                                    style={{
-                                        backgroundColor: color,
-                                        border: selectedPixel && selectedPixel.x === x && selectedPixel.y === y ? '2px solid red' : '1px solid black'
-                                    }} />
-                            ))}
-                        </div>
-                    ))}
-                </div>
-            </div>
-        </div>
-    );
-}
+  socket.on('disconnect', () => {
+    console.log('Client disconnected');
+  });
+});
 
-export default App;
+// 모든 요청을 React 앱으로 라우팅
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'build', 'index.html'));
+});
+
+// 포트 설정
+const PORT = process.env.PORT || 4000;
+server.listen(PORT, () => console.log(`Listening on port ${PORT}`));
