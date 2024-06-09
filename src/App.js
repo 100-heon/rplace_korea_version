@@ -4,8 +4,7 @@ import { SketchPicker } from 'react-color';
 import Draggable from 'react-draggable';
 import './App.css';
 
-// 현재 서버 도메인이나 IP 주소를 넣으세요
-const socket = io('https://rplace-ssu-adsl-84537383.koyeb.app/'); 
+const socket = io('https://rplace-ssu-adsl-84537383.koyeb.app'); 
 
 function App() {
     const [board, setBoard] = useState([]);
@@ -14,16 +13,14 @@ function App() {
     const [showPicker, setShowPicker] = useState(false);
     const [pickerPosition, setPickerPosition] = useState({ x: 0, y: 0 });
     const [tempBoard, setTempBoard] = useState([]);
-    const [pickerKey, setPickerKey] = useState(0); // 팔레트 위치를 강제로 업데이트하기 위한 상태
+    const [pickerKey, setPickerKey] = useState(0);
 
     useEffect(() => {
-        // 서버로부터 초기 보드 상태를 받음
         socket.on('initial_board', board => {
             setBoard(board);
             setTempBoard(board);
         });
 
-        // 서버로부터 색상 변경 사항을 받음
         socket.on('change_color', data => {
             setBoard(prevBoard => {
                 const { x, y, color } = data;
@@ -42,17 +39,14 @@ function App() {
     }, []);
 
     const handlePixelClick = (x, y, event) => {
-        // 현재 팔레트가 열려있는 상태에서도 새로운 픽셀 클릭을 허용
         if (showPicker) {
-            cancelColorChange(); // 기존 선택 상태 초기화
+            cancelColorChange();
         }
 
         setSelectedPixel({ x, y });
         setShowPicker(true);
-
-        // 팔레트 위치를 픽셀 위치에서 약간 떨어진 곳으로 설정
         setPickerPosition({ x: event.clientX + 20, y: event.clientY + 20 });
-        setPickerKey(prevKey => prevKey + 1); // 새로운 키 값 설정
+        setPickerKey(prevKey => prevKey + 1);
     };
 
     const handleColorChange = (color) => {
@@ -79,7 +73,7 @@ function App() {
     const cancelColorChange = () => {
         setSelectedPixel(null);
         setShowPicker(false);
-        setTempBoard(board); // 원래 보드 상태로 되돌리기
+        setTempBoard(board);
     };
 
     return (

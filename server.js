@@ -11,29 +11,30 @@ console.log('MongoDB URI:', process.env.MONGODB_URI);
 mongoose.connect(process.env.MONGODB_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
-  serverSelectionTimeoutMS: 5000, // 연결 타임아웃 설정
+  serverSelectionTimeoutMS: 5000,
 }).then(() => {
   console.log('MongoDB connected');
-  initBoard(); // 보드 초기화 함수 호출
+  initBoard();
 }).catch(err => {
   console.error('MongoDB connection error:', err);
 });
 
 const app = express();
 app.use(cors());
-
-// 정적 파일 제공
 app.use(express.static(path.join(__dirname, 'build')));
+
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'build', 'index.html'));
+});
 
 const server = http.createServer(app);
 const io = socketIo(server, {
   cors: {
-    origin: "*", // 모든 도메인에서 접근 허용
+    origin: "*",
     methods: ["GET", "POST"],
   },
 });
 
-// 보드 스키마 및 모델 정의
 const boardSchema = new mongoose.Schema({
   x: Number,
   y: Number,
@@ -42,7 +43,6 @@ const boardSchema = new mongoose.Schema({
 
 const Board = mongoose.model('Board', boardSchema);
 
-// 초기 보드 상태 설정 함수
 const initBoard = async () => {
   const boardData = await Board.find({});
   if (boardData.length === 0) {
@@ -61,8 +61,7 @@ const initBoard = async () => {
 
 io.on('connection', async (socket) => {
   console.log('New client connected');
-  
-  // 초기 보드 상태를 클라이언트에 전송
+
   const boardData = await Board.find({});
   const formattedBoard = Array(50).fill().map(() => Array(70).fill("#FFFFFF"));
   boardData.forEach(item => {
@@ -78,8 +77,7 @@ io.on('connection', async (socket) => {
       const result = await Board.updateOne({ x, y }, { x, y, color }, { upsert: true });
       console.log(`Color updated at (${x}, ${y}) to ${color}`);
       console.log('Update result:', result);
-      
-      // 업데이트 후 데이터 확인
+
       const updatedBoard = await Board.findOne({ x, y });
       console.log('Updated board entry:', updatedBoard);
 
@@ -94,11 +92,5 @@ io.on('connection', async (socket) => {
   });
 });
 
-// 모든 요청을 React 앱으로 라우팅
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'build', 'index.html'));
-});
-
-// 포트 설정
 const PORT = process.env.PORT || 4000;
 server.listen(PORT, () => console.log(`Listening on port ${PORT}`));
