@@ -4,29 +4,18 @@ const socketIo = require('socket.io');
 const cors = require('cors');
 const mongoose = require('mongoose');
 const path = require('path');
-require('dotenv').config();
-
-console.log('MongoDB URI:', process.env.MONGODB_URI);
-
-mongoose.connect(process.env.MONGODB_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-  serverSelectionTimeoutMS: 5000,
-}).then(() => {
-  console.log('MongoDB connected');
-  initBoard();
-}).catch(err => {
-  console.error('MongoDB connection error:', err);
-});
+require('dotenv').config(); // .env 파일을 로드합니다.
 
 const app = express();
 app.use(cors());
-app.use(express.static(path.join(__dirname, 'build')));  // 정적 파일 제공
+
+// 정적 파일 제공
+app.use(express.static(path.join(__dirname, 'build')));
 
 const server = http.createServer(app);
 const io = socketIo(server, {
   cors: {
-    origin: "*",
+    origin: "http://localhost:3000", // 클라이언트 주소를 명시적으로 허용
     methods: ["GET", "POST"],
   },
 });
@@ -39,6 +28,24 @@ const boardSchema = new mongoose.Schema({
 });
 
 const Board = mongoose.model('Board', boardSchema);
+
+// MongoDB 연결 설정 (환경 변수를 사용)
+const uri = process.env.MONGODB_URI;
+console.log('MongoDB URI:', uri); // 이 줄을 추가하여 URI가 제대로 로드되는지 확인합니다.
+
+mongoose.connect(uri, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+  serverSelectionTimeoutMS: 5000, // 연결 타임아웃 설정
+  tls: true,
+  tlsAllowInvalidCertificates: true,
+  tlsAllowInvalidHostnames: true,
+}).then(() => {
+  console.log('MongoDB connected');
+  initBoard(); // MongoDB 연결 후 보드 초기화 함수 호출
+}).catch(err => {
+  console.error('MongoDB connection error:', err);
+});
 
 // 초기 보드 상태 설정 함수
 const initBoard = async () => {
@@ -60,6 +67,7 @@ const initBoard = async () => {
 io.on('connection', async (socket) => {
   console.log('New client connected');
   
+  // 초기 보드 상태를 클라이언트에 전송
   const boardData = await Board.find({});
   const formattedBoard = Array(50).fill().map(() => Array(70).fill("#FFFFFF"));
   boardData.forEach(item => {
@@ -72,10 +80,10 @@ io.on('connection', async (socket) => {
     const { x, y, color } = data;
     console.log('Received color change:', data);
     try {
-      const result = await Board.updateOne({ x, y }, { x, y, color }, { upsert: true });
+      await Board.updateOne({ x, y }, { x, y, color }, { upsert: true });
       console.log(`Color updated at (${x}, ${y}) to ${color}`);
-      console.log('Update result:', result);
       
+      // 업데이트 후 데이터 확인
       const updatedBoard = await Board.findOne({ x, y });
       console.log('Updated board entry:', updatedBoard);
 
@@ -95,5 +103,6 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'build', 'index.html'));
 });
 
+// 포트 설정
 const PORT = process.env.PORT || 4000;
 server.listen(PORT, () => console.log(`Listening on port ${PORT}`));
