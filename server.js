@@ -11,10 +11,10 @@ console.log('MongoDB URI:', process.env.MONGODB_URI);
 mongoose.connect(process.env.MONGODB_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
-  serverSelectionTimeoutMS: 5000,
+  serverSelectionTimeoutMS: 5000, // 연결 타임아웃 설정
 }).then(() => {
   console.log('MongoDB connected');
-  initBoard();
+  initBoard(); // 보드 초기화 함수 호출
 }).catch(err => {
   console.error('MongoDB connection error:', err);
 });
@@ -28,7 +28,7 @@ app.use(express.static(path.join(__dirname, 'build')));
 const server = http.createServer(app);
 const io = socketIo(server, {
   cors: {
-    origin: "http://localhost:3000",
+    origin: "http://localhost:3000", // 클라이언트 주소를 명시적으로 허용
     methods: ["GET", "POST"],
   },
 });
@@ -62,6 +62,7 @@ const initBoard = async () => {
 io.on('connection', async (socket) => {
   console.log('New client connected');
   
+  // 초기 보드 상태를 클라이언트에 전송
   const boardData = await Board.find({});
   const formattedBoard = Array(50).fill().map(() => Array(70).fill("#FFFFFF"));
   boardData.forEach(item => {
@@ -78,6 +79,7 @@ io.on('connection', async (socket) => {
       console.log(`Color updated at (${x}, ${y}) to ${color}`);
       console.log('Update result:', result);
       
+      // 업데이트 후 데이터 확인
       const updatedBoard = await Board.findOne({ x, y });
       console.log('Updated board entry:', updatedBoard);
 
