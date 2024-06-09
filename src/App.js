@@ -5,7 +5,7 @@ import Draggable from 'react-draggable';
 import './App.css';
 
 // 현재 서버 도메인이나 IP 주소를 넣으세요
-const socket = io('https://your-koyeb-app-url.koyeb.app'); 
+const socket = io('https://rplace-ssu-adsl-84537383.koyeb.app/'); 
 
 function App() {
     const [board, setBoard] = useState([]);
