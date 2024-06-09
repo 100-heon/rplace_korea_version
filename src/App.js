@@ -16,14 +16,19 @@ function App() {
     const [pickerKey, setPickerKey] = useState(0); // 팔레트 위치를 강제로 업데이트하기 위한 상태
 
     useEffect(() => {
-        // 초기 보드 설정 (50 x 50)
+        // 초기 보드 설정 (50 x 70)
         const initialBoard = Array(50).fill().map(() => Array(70).fill("#FFFFFF"));
         setBoard(initialBoard);
         setTempBoard(initialBoard);
 
         socket.on('initial_board', board => {
-            setBoard(board);
-            setTempBoard(board);
+            console.log('Received board data:', board);
+            if (Array.isArray(board)) {
+                setBoard(board);
+                setTempBoard(board);
+            } else {
+                console.error('Received board data is not an array:', board);
+            }
         });
 
         socket.on('change_color', data => {
@@ -44,17 +49,15 @@ function App() {
     }, []);
 
     const handlePixelClick = (x, y, event) => {
-        // 현재 팔레트가 열려있는 상태에서도 새로운 픽셀 클릭을 허용
         if (showPicker) {
-            cancelColorChange(); // 기존 선택 상태 초기화
+            cancelColorChange();
         }
 
         setSelectedPixel({ x, y });
         setShowPicker(true);
 
-        // 팔레트 위치를 픽셀 위치에서 약간 떨어진 곳으로 설정
         setPickerPosition({ x: event.clientX + 20, y: event.clientY + 20 });
-        setPickerKey(prevKey => prevKey + 1); // 새로운 키 값 설정
+        setPickerKey(prevKey => prevKey + 1);
     };
 
     const handleColorChange = (color) => {
@@ -81,7 +84,7 @@ function App() {
     const cancelColorChange = () => {
         setSelectedPixel(null);
         setShowPicker(false);
-        setTempBoard(board); // 원래 보드 상태로 되돌리기
+        setTempBoard(board);
     };
 
     return (
