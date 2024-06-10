@@ -46,28 +46,15 @@ function App() {
         setSelectedPixel({ x, y });
         setShowPicker(true);
     
-        const windowWidth = window.innerWidth;
-        const windowHeight = window.innerHeight;
-        const pickerWidth = 300; // 팔레트의 대략적인 너비
-        const pickerHeight = 400; // 팔레트의 대략적인 높이
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+        
+        let pickerX = event.clientX;
+        let pickerY = event.clientY;
     
-        let pickerX, pickerY;
-    
-        if (event.clientX < windowWidth / 2) {
-            // 클릭 위치가 화면 중앙 왼쪽에 있을 경우, 팔레트를 오른쪽에 표시
-            pickerX = event.clientX + 20;
-        } else {
-            // 클릭 위치가 화면 중앙 오른쪽에 있을 경우, 팔레트를 왼쪽에 표시
-            pickerX = event.clientX - pickerWidth - 20;
-        }
-    
-        if (event.clientY < windowHeight / 2) {
-            // 클릭 위치가 화면 중앙 위쪽에 있을 경우, 팔레트를 아래쪽에 표시
-            pickerY = event.clientY + 20;
-        } else {
-            // 클릭 위치가 화면 중앙 아래쪽에 있을 경우, 팔레트를 위쪽에 표시
-            pickerY = event.clientY - pickerHeight - 20;
-        }
+        // 팔레트가 화면 밖으로 나가지 않도록 조정
+        pickerX = Math.min(pickerX, viewportWidth - 300); // 팔레트의 폭 고려
+        pickerY = Math.min(pickerY, viewportHeight - 400); // 팔레트의 높이 고려
     
         setPickerPosition({ x: pickerX, y: pickerY });
         setPickerKey(prevKey => prevKey + 1);
@@ -111,7 +98,7 @@ function App() {
                         <SketchPicker color={currentColor} onChange={handleColorChange} />
                         <div style={{ marginTop: '10px', textAlign: 'center' }}>
                             <button onTouchEnd={confirmColorChange} onClick={confirmColorChange} style={{ marginRight: '10px' }}>확인</button>
-                            <button onClick={cancelColorChange}>취소</button>
+                            <button onClick={cancelColorChange} onTouchEnd={(e) => {e.preventDefault();  cancelColorChange();}}style={{ marginRight: '10px' }}>취소</button>
                         </div>
                     </div>
                 </Draggable>
