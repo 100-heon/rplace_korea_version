@@ -15,11 +15,10 @@ app.use(express.static(path.join(__dirname, 'build')));
 const server = http.createServer(app);
 const io = socketIo(server, {
   cors: {
-    origin: "https://rplace-ssu-adsl-84537383.koyeb.app", // 클라이언트 주소를 Koyeb의 주소로 업데이트
+    origin: "https://rplace-ssu-adsl-81c47514.koyeb.app/", // 클라이언트 주소를 Koyeb의 주소로 업데이트
     methods: ["GET", "POST"],
   },
 });
-
 
 // 보드 스키마 및 모델 정의
 const boardSchema = new mongoose.Schema({
@@ -62,6 +61,7 @@ const initBoard = async () => {
     console.log('Initial board data inserted');
   } else {
     console.log('Board data already exists');
+    console.log('Existing board data:', boardData); // 기존 데이터 로그 추가
   }
 };
 
@@ -74,20 +74,21 @@ io.on('connection', async (socket) => {
   boardData.forEach(item => {
     formattedBoard[item.y][item.x] = item.color;
   });
-  //console.log('Sending initial board:', formattedBoard);
   socket.emit('initial_board', formattedBoard);
 
   socket.on('change_color', async (data) => {
     const { x, y, color } = data;
     console.log('Received color change:', data);
     try {
-      await Board.updateOne({ x, y }, { x, y, color }, { upsert: true });
+      // 데이터베이스 업데이트
+      await Board.updateOne({ x, y }, { $set: { color } }, { upsert: true });
       console.log(`Color updated at (${x}, ${y}) to ${color}`);
       
       // 업데이트 후 데이터 확인
       const updatedBoard = await Board.findOne({ x, y });
       console.log('Updated board entry:', updatedBoard);
 
+      // 모든 클라이언트에 색상 변경 정보 전송
       io.emit('change_color', { x, y, color });
     } catch (err) {
       console.error('Failed to update color:', err);
