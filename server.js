@@ -32,7 +32,7 @@ const Board = mongoose.model('Board', boardSchema);
 
 // MongoDB 연결 설정 (환경 변수를 사용)
 const uri = process.env.MONGODB_URI;
-//console.log('MongoDB URI:', uri); // 이 줄을 추가하여 URI가 제대로 로드되는지 확인합니다.
+console.log('MongoDB URI:', uri); // 이 줄을 추가하여 URI가 제대로 로드되는지 확인합니다.
 
 mongoose.connect(uri, {
   useNewUrlParser: true,
