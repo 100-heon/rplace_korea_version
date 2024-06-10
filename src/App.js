@@ -45,9 +45,30 @@ function App() {
     
         setSelectedPixel({ x, y });
         setShowPicker(true);
-        // 팔레트 위치를 마우스 클릭 위치에 가깝게 설정
-        const pickerX = event.clientX - 150; // 팔레트 너비의 절반을 고려하여 조정
-        const pickerY = event.clientY - 150; // 팔레트 높이의 절반을 고려하여 조정
+    
+        const windowWidth = window.innerWidth;
+        const windowHeight = window.innerHeight;
+        const pickerWidth = 300; // 팔레트의 대략적인 너비
+        const pickerHeight = 400; // 팔레트의 대략적인 높이
+    
+        let pickerX, pickerY;
+    
+        if (event.clientX < windowWidth / 2) {
+            // 클릭 위치가 화면 중앙 왼쪽에 있을 경우, 팔레트를 오른쪽에 표시
+            pickerX = event.clientX + 20;
+        } else {
+            // 클릭 위치가 화면 중앙 오른쪽에 있을 경우, 팔레트를 왼쪽에 표시
+            pickerX = event.clientX - pickerWidth - 20;
+        }
+    
+        if (event.clientY < windowHeight / 2) {
+            // 클릭 위치가 화면 중앙 위쪽에 있을 경우, 팔레트를 아래쪽에 표시
+            pickerY = event.clientY + 20;
+        } else {
+            // 클릭 위치가 화면 중앙 아래쪽에 있을 경우, 팔레트를 위쪽에 표시
+            pickerY = event.clientY - pickerHeight - 20;
+        }
+    
         setPickerPosition({ x: pickerX, y: pickerY });
         setPickerKey(prevKey => prevKey + 1);
     };
@@ -82,7 +103,8 @@ function App() {
 
     return (
         <div className="App">
-            <h1>시험 기간에 미쳐가는 ADSL</h1>
+            <h1>시험 기간에 미쳐봅시다</h1>
+            <p style={{ fontSize: '14px', color: 'gray', marginTop: '3px' }}>made by 100_heon</p>
             {showPicker && (
                 <Draggable key={pickerKey} defaultPosition={pickerPosition}>
                     <div className="picker-container" style={{ position: 'absolute', zIndex: 1000, background: '#fff', padding: '10px', borderRadius: '10px', boxShadow: '0 0 10px rgba(0,0,0,0.2)' }}>
