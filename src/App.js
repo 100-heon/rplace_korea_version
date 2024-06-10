@@ -4,7 +4,7 @@ import { SketchPicker } from 'react-color';
 import Draggable from 'react-draggable';
 import './App.css';
 
-const socket = io('https://rplace-ssu-adsl-84537383.koyeb.app'); 
+const socket = io(process.env.KOYEB_INSTANCE_URL);
 
 function App() {
     const [board, setBoard] = useState([]);

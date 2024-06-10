@@ -15,10 +15,11 @@ app.use(express.static(path.join(__dirname, 'build')));
 const server = http.createServer(app);
 const io = socketIo(server, {
   cors: {
-    origin: "http://localhost:3000", // 클라이언트 주소를 명시적으로 허용
+    origin: "https://rplace-ssu-adsl-84537383.koyeb.app", // 클라이언트 주소를 Koyeb의 주소로 업데이트
     methods: ["GET", "POST"],
   },
 });
+
 
 // 보드 스키마 및 모델 정의
 const boardSchema = new mongoose.Schema({
@@ -69,7 +70,7 @@ io.on('connection', async (socket) => {
   
   // 초기 보드 상태를 클라이언트에 전송
   const boardData = await Board.find({});
-  const formattedBoard = Array(50).fill().map(() => Array(70).fill("#FFFFFF"));
+  const formattedBoard = Array(50).fill().map(() => Array(115).fill("#FFFFFF"));
   boardData.forEach(item => {
     formattedBoard[item.y][item.x] = item.color;
   });
