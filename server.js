@@ -53,7 +53,7 @@ const initBoard = async () => {
   if (boardData.length === 0) {
     const initialBoard = [];
     for (let y = 0; y < 50; y++) {
-      for (let x = 0; x < 70; x++) {
+      for (let x = 0; x < 115; x++) {
         initialBoard.push({ x, y, color: "#FFFFFF" });
       }
     }
