@@ -4,6 +4,7 @@ html, body {
   width: 100%;
   min-width: 100vw; /* 뷰포트 너비와 같거나 더 넓게 설정 */
   overflow-x: auto; /* 가로 스크롤 활성화 */
+  text-align: center;
 }
 
 .board-container {
