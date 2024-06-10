@@ -42,10 +42,13 @@ function App() {
         if (showPicker) {
             cancelColorChange();
         }
-
+    
         setSelectedPixel({ x, y });
         setShowPicker(true);
-        setPickerPosition({ x: event.clientX + 20, y: event.clientY + 20 });
+        // 팔레트 위치를 마우스 클릭 위치에 가깝게 설정
+        const pickerX = event.clientX - 150; // 팔레트 너비의 절반을 고려하여 조정
+        const pickerY = event.clientY - 150; // 팔레트 높이의 절반을 고려하여 조정
+        setPickerPosition({ x: pickerX, y: pickerY });
         setPickerKey(prevKey => prevKey + 1);
     };
 
@@ -61,7 +64,8 @@ function App() {
         }
     };
 
-    const confirmColorChange = () => {
+    const confirmColorChange = (event) => {
+        event.preventDefault(); // 기본 이벤트를 방지
         if (selectedPixel) {
             const { x, y } = selectedPixel;
             socket.emit('change_color', { x, y, color: currentColor });
@@ -78,13 +82,13 @@ function App() {
 
     return (
         <div className="App">
-            <h1>시험기간에 미쳐가는 ADSL</h1>
+            <h1>시험 기간에 미쳐가는 ADSL</h1>
             {showPicker && (
                 <Draggable key={pickerKey} defaultPosition={pickerPosition}>
                     <div className="picker-container" style={{ position: 'absolute', zIndex: 1000, background: '#fff', padding: '10px', borderRadius: '10px', boxShadow: '0 0 10px rgba(0,0,0,0.2)' }}>
                         <SketchPicker color={currentColor} onChange={handleColorChange} />
                         <div style={{ marginTop: '10px', textAlign: 'center' }}>
-                            <button onClick={confirmColorChange} style={{ marginRight: '10px' }}>확인</button>
+                            <button onTouchEnd={confirmColorChange} onClick={confirmColorChange} style={{ marginRight: '10px' }}>확인</button>
                             <button onClick={cancelColorChange}>취소</button>
                         </div>
                     </div>
