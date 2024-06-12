@@ -8,6 +8,7 @@ const socket = io(process.env.KOYEB_INSTANCE_URL);
 
 function App() {
     const [board, setBoard] = useState(Array(100).fill().map(() => Array(230).fill("#FFFFFF")));
+    const [tempBoard, setTempBoard] = useState(board); // 임시 보드 상태 추가
     const [currentColor, setCurrentColor] = useState("#000000");
     const [selectedPixel, setSelectedPixel] = useState(null);
     const [showPicker, setShowPicker] = useState(false);
@@ -17,6 +18,7 @@ function App() {
     useEffect(() => {
         socket.on('initial_board', board => {
             setBoard(board);
+            setTempBoard(board); // 초기 보드 상태 설정
         });
 
         socket.on('change_color', data => {
@@ -26,9 +28,14 @@ function App() {
                 newBoard[y][x] = color;
                 return newBoard;
             });
+            setTempBoard(prevBoard => {
+                const { x, y, color } = data;
+                const newBoard = [...prevBoard];
+                newBoard[y][x] = color;
+                return newBoard;
+            });
         });
 
-        // Handle enter key press
         const handleEnterPress = (event) => {
             if (event.key === 'Enter' && showPicker) {
                 confirmColorChange(event);
@@ -39,7 +46,7 @@ function App() {
         return () => {
             window.removeEventListener('keydown', handleEnterPress);
         };
-    }, [showPicker]); // Re-bind event listener if showPicker changes
+    }, [showPicker]);
 
     const handlePixelClick = (x, y, event) => {
         if (showPicker) {
@@ -60,13 +67,13 @@ function App() {
         const clickedPixelX = boardRect.left + (x * pixelSize) - window.pageXOffset;
         const clickedPixelY = boardRect.top + (y * pixelSize) - window.pageYOffset;
 
-        let pickerX = clickedPixelX + gap;
-        let pickerY = clickedPixelY + gap;
+        let pickerX = clickedPixelX + gap; // 기본적으로 픽셀 오른쪽에 위치
+        let pickerY = clickedPixelY + gap; // 기본적으로 픽셀 아래에 위치
 
-        if (pickerX + pickerWidth > window.innerWidth + window.pageXOffset) {
+        if (pickerX + pickerWidth > window.innerWidth) {
             pickerX = clickedPixelX - pickerWidth - gap;
         }
-        if (pickerY + pickerHeight > window.innerHeight + window.pageYOffset) {
+        if (pickerY + pickerHeight > window.innerHeight) {
             pickerY = clickedPixelY - pickerHeight - gap;
         }
 
@@ -77,9 +84,10 @@ function App() {
     const handleColorChange = (color) => {
         setCurrentColor(color.hex);
         if (selectedPixel) {
-            setBoard(prevBoard => {
+            const { x, y } = selectedPixel;
+            setTempBoard(prevBoard => {
                 const newBoard = prevBoard.map(row => [...row]);
-                newBoard[selectedPixel.y][selectedPixel.x] = color.hex;
+                newBoard[y][x] = color.hex;
                 return newBoard;
             });
         }
@@ -88,13 +96,16 @@ function App() {
     const confirmColorChange = (event) => {
         event.preventDefault();
         if (selectedPixel) {
-            socket.emit('change_color', { x: selectedPixel.x, y: selectedPixel.y, color: currentColor });
+            const { x, y } = selectedPixel;
+            socket.emit('change_color', { x, y, color: currentColor });
+            setBoard(tempBoard);
             setSelectedPixel(null);
             setShowPicker(false);
         }
     };
 
     const cancelColorChange = () => {
+        setTempBoard(board);
         setSelectedPixel(null);
         setShowPicker(false);
     };
@@ -119,10 +130,10 @@ function App() {
             )}
             <div className="board-container">
                 <div className="pixel-board">
-                    {board.map((row, y) => (
+                    {tempBoard.map((row, y) => (
                         <div key={y} style={{ display: 'flex' }}>
                             {row.map((color, x) => (
-                                <div key={x} onClick={(e) => handlePixelClick(x, y, e)} 
+                                <div key={x} onClick={(e) => handlePixelClick(x, y, e)}
                                     className="pixel"
                                     style={{
                                         backgroundColor: color,
