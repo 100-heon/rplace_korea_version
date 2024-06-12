@@ -2,8 +2,7 @@ html, body {
   margin: 0;
   padding: 0;
   width: 100%;
-  min-width: 100vw; /* 뷰포트 너비와 같거나 더 넓게 설정 */
-  overflow-x: auto; /* 가로 스크롤 활성화 */
+  overflow-x: hidden; /* 전체 페이지의 가로 스크롤을 방지 */
   text-align: center;
 }
 
@@ -13,7 +12,8 @@ html, body {
   align-items: center;
   padding: 20px;
   box-sizing: border-box;
-  min-width: 1200px; /* 전체 보드의 최소 너비 */
+  width: 100%; /* container 너비를 100%로 설정 */
+  overflow-x: auto; /* 보드 컨테이너 내에서만 가로 스크롤 활성화 */
 }
 
 .pixel-board {
@@ -21,7 +21,8 @@ html, body {
   flex-wrap: wrap;
   padding: 10px;
   border: 1px solid #ddd;
-  min-width: 100%; /* 보드 컨테이너 내에서 100% 너비 */
+  width: 4600px; /* 보드의 실제 너비 설정(픽셀*픽셀 수) */
+  min-width: 100%; /* 필요 없으면 제거 가능 */
 }
 
 .pixel {
