@@ -1,5 +1,7 @@
 Reddit 이라는 커뮤니티 사이트에서 제작한 r/place라는 프로젝트를 구현해보았습니다.
 
+https://en.wikipedia.org/wiki/R/place
+
 구현을 위해
 React와 mongoDB를 사용하였습니다.
 
