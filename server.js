@@ -60,15 +60,18 @@ mongoose.connect(uri, {
 
 const initBoard = async () => {
   const boardData = await Board.find({});
-  if (boardData.length === 0) {
-    const initialBoard = [];
+  const existingSizeX = Math.max(...boardData.map(item => item.x)) + 1;
+  const existingSizeY = Math.max(...boardData.map(item => item.y)) + 1;
+
+  if (existingSizeX < 270 || existingSizeY < 100) { 
+    const additionalBoard = [];
     for (let y = 0; y < 100; y++) {
-      for (let x = 0; x < 230; x++) {
-        initialBoard.push({ x, y, color: "#FFFFFF" });
+      for (let x = existingSizeX; x < 270; x++) {
+        additionalBoard.push({ x, y, color: "#FFFFFF" });
       }
     }
-    await Board.insertMany(initialBoard);
-    console.log('Initial board data inserted');
+    await Board.insertMany(additionalBoard);
+    console.log('Additional board data inserted');
   } else {
     console.log('Board data already exists');
   }
@@ -79,7 +82,7 @@ io.on('connection', async (socket) => {
   console.log(`New client connected from IP: ${ip}`);
   
   const boardData = await Board.find({});
-  const formattedBoard = Array(100).fill().map(() => Array(230).fill("#FFFFFF"));
+  const formattedBoard = Array(100).fill().map(() => Array(270).fill("#FFFFFF"));
   boardData.forEach(item => {
     formattedBoard[item.y][item.x] = item.color;
   });

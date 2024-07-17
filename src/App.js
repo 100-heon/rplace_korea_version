@@ -7,7 +7,7 @@ import './App.css';
 const socket = io(process.env.KOYEB_INSTANCE_URL);
 
 function App() {
-    const [board, setBoard] = useState(Array(100).fill().map(() => Array(230).fill("#FFFFFF")));
+    const [board, setBoard] = useState(Array(100).fill().map(() => Array(270).fill("#FFFFFF")));
     const [tempBoard, setTempBoard] = useState(board); // 임시 보드 상태 추가
     const [currentColor, setCurrentColor] = useState("#000000");
     const [selectedPixel, setSelectedPixel] = useState(null);
@@ -56,7 +56,7 @@ function App() {
         setSelectedPixel({ x, y });
         setShowPicker(true);
 
-        const pixelSize = 20; // 픽셀의 크기
+        const pixelSize = 10; // 픽셀의 크기
         const gap = 40; // 팔레트와 픽셀 사이의 간격
         const pickerWidth = 200; // 팔레트의 너비
         const pickerHeight = 250; // 팔레트의 높이
@@ -109,6 +109,48 @@ function App() {
         setSelectedPixel(null);
         setShowPicker(false);
     };
+
+    useEffect(() => {
+        const boardContainer = document.querySelector('.board-container');
+        let startX, startY, scrollLeft, scrollTop, isDown;
+    
+        const handleTouchStart = (e) => {
+            isDown = true; // 드래그 시작 플래그 설정
+            startX = e.touches[0].pageX;
+            startY = e.touches[0].pageY;
+            scrollLeft = boardContainer.scrollLeft;
+            scrollTop = boardContainer.scrollTop;
+        };
+    
+        const handleTouchMove = (e) => {
+            if (!isDown) return;
+            const x = e.touches[0].pageX;
+            const y = e.touches[0].pageY;
+    
+            // 움직인 거리 계산
+            const walkX = (x - startX);
+            const walkY = (y - startY);
+    
+            // 스크롤 업데이트
+            boardContainer.scrollLeft = scrollLeft - walkX;
+            boardContainer.scrollTop = scrollTop - walkY;
+        };
+    
+        const handleTouchEnd = () => {
+            isDown = false; // 드래그 종료 플래그 해제
+        };
+    
+        boardContainer.addEventListener('touchstart', handleTouchStart);
+        boardContainer.addEventListener('touchmove', handleTouchMove);
+        boardContainer.addEventListener('touchend', handleTouchEnd);
+    
+        return () => {
+            boardContainer.removeEventListener('touchstart', handleTouchStart);
+            boardContainer.removeEventListener('touchmove', handleTouchMove);
+            boardContainer.removeEventListener('touchend', handleTouchEnd);
+        };
+    }, []);
+    
 
     return (
         <div className="App">
