@@ -10,13 +10,6 @@ const app = express();
 app.use(cors());
 app.use(express.static(path.join(__dirname, 'build')));
 
-// 클라이언트 IP 주소를 가져오기 위한 미들웨어
-app.use((req, res, next) => {
-  const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-  console.log(`Client IP: ${ip}`);
-  next();
-});
-
 const server = http.createServer(app);
 const io = socketIo(server, {
   cors: {
@@ -36,7 +29,6 @@ const logSchema = new mongoose.Schema({
   x: Number,
   y: Number,
   color: String,
-  ip: String, // IP 주소 필드 추가
   timestamp: { type: Date, default: Date.now }
 });
 const Log = mongoose.model('Log', logSchema);
@@ -75,9 +67,7 @@ const initBoard = async () => {
 };
 
 io.on('connection', async (socket) => {
-  const ip = socket.handshake.headers['x-forwarded-for'] || socket.handshake.address;
-  console.log(`New client connected from IP: ${ip}`);
-  
+  console.log('New client connected');
   const boardData = await Board.find({});
   const formattedBoard = Array(100).fill().map(() => Array(230).fill("#FFFFFF"));
   boardData.forEach(item => {
@@ -90,11 +80,9 @@ io.on('connection', async (socket) => {
     console.log('Received color change:', data);
     try {
       await Board.updateOne({ x, y }, { $set: { color } }, { upsert: true });
-      
-      // 로그에 IP 주소 포함하여 저장
-      const logEntry = new Log({ x, y, color, ip });
+      const logEntry = new Log({ x, y, color });
       await logEntry.save();
-      console.log(`Color updated at (${x}, ${y}) to ${color}\nIP: ${ip}`);
+      console.log(`Color updated at (${x}, ${y}) to ${color}`);
 
       const updatedBoard = await Board.findOne({ x, y });
       console.log('Updated board entry:', updatedBoard);
@@ -106,7 +94,7 @@ io.on('connection', async (socket) => {
   });
 
   socket.on('disconnect', () => {
-    console.log(`Client disconnected from IP: ${ip}`);
+    console.log('Client disconnected');
   });
 });
 

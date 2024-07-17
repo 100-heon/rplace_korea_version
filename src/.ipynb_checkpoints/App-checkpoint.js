@@ -112,7 +112,7 @@ function App() {
 
     return (
         <div className="App">
-            <h1>kr/place</h1>
+            <h1>시험 기간에 미쳐봅시다</h1>
             <p style={{ fontSize: '14px', color: 'gray', marginTop: '3px' }}>made by 100_heon</p>
             {showPicker && (
                 <Draggable
