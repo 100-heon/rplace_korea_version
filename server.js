@@ -20,7 +20,7 @@ app.use((req, res, next) => {
 const server = http.createServer(app);
 const io = socketIo(server, {
   cors: {
-    origin: "https://rplace-ssu-adsl-81c47514.koyeb.app/",
+    origin: "https://rplace-ssu-adsl.koyeb.app/",
     methods: ["GET", "POST"],
   },
 });
